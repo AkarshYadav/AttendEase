@@ -9,7 +9,7 @@ import Link from "next/link"
 
 export const UserItem = () => {
     const pathname = usePathname()
-    const isActive = pathname === "/"
+    const isActive = pathname === "/dashboard"
 
     const { collapsed } = useSidebar((state) => state);
 

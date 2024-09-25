@@ -1,10 +1,26 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)',`/api/webhooks/(.*)`])
+const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)', `/api/webhooks/(.*)`])
 
-export default clerkMiddleware((auth, request) => {
+export default clerkMiddleware(async (auth, request) => {
   if (!isPublicRoute(request)) {
-    auth().protect()
+    const { sessionClaims } = await auth()
+    
+    if (!sessionClaims) {
+      return NextResponse.redirect(new URL('/sign-in', request.url))
+    }
+
+    const userRole = sessionClaims?.metadata?.role
+
+    if (userRole === 'teacher' && request.nextUrl.pathname === '/') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    if (userRole === 'student' && request.nextUrl.pathname === '/') {
+      return NextResponse.redirect(new URL('/classroom', request.url))
+    }
   }
 })
 

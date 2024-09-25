@@ -22,7 +22,7 @@ export const Actions = async () => {
                                     className="h-6 w-6 ">
                                 </CirclePlus>
                                 <p className="hidden lg:block  ">
-                                    Join Class
+                                    Create Course
                                 </p>
                             </div>
                         </Link>

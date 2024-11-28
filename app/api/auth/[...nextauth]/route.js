@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import connect from "../../../../lib/mongodb/mongoose";
-import User from "../../../../lib/models/user.model"
+import User from "../../../../lib/models/user.model";
 import bcrypt from "bcrypt";
 
 export const authOptions = {
@@ -20,9 +20,9 @@ export const authOptions = {
       name: "Credentials",
       credentials: {
         email: {
-          label: "Username",
-          type: "email_address",
-          placeholder: "Enter your username",
+          label: "Email",
+          type: "email",
+          placeholder: "Enter your email",
         },
         password: { label: "Password", type: "password" },
       },
@@ -42,13 +42,14 @@ export const authOptions = {
         );
 
         if (!isPasswordMatched) {
+          console.log("Invalid credentials");
           return null;
         }
 
         return {
           id: user._id.toString(),
           name: user.collegeId,
-          email: user.email
+          email: user.email,
         };
       },
     }),
@@ -58,23 +59,20 @@ export const authOptions = {
       try {
         await connect();
 
-        // Check if user exists
         const existingUser = await User.findOne({ email: user.email });
-        
-        if (!existingUser && account.provider !== 'credentials') {
-          // Create new user for OAuth providers
-          // Generate collegeId from email
-          const collegeId = user.email.split('@')[0];
-          
+
+        if (!existingUser && account.provider !== "credentials") {
+          const collegeId = user.email.split("@")[0];
+
           await User.create({
             email: user.email,
             password: await bcrypt.hash(Math.random().toString(36), 10),
             collegeId: collegeId,
             createdClasses: [],
-            enrolledIn: []
+            enrolledIn: [],
           });
         }
-        
+
         return true;
       } catch (error) {
         console.error("Error in signIn callback:", error);

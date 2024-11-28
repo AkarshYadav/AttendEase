@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { ClipLoader } from "react-spinners";
 import { toast } from "react-toastify";
 import Image from "next/image";
+
 const SignIn = () => {
   const { data: session } = useSession();
   const router = useRouter();

@@ -2,7 +2,7 @@
 'use server'
 
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 import Class from '@/lib/models/class.model';
 import User from '@/lib/models/user.model';
 import Enrollment from '@/lib/models/enrollment.model';

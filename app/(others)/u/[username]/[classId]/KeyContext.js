@@ -12,11 +12,8 @@ export const KeyProvider = ({ children }) => {
 
     // Generate secure unique key
     const generateUniqueKey = () => {
-        let timestamp = Date.now() - Date.now() % 100000;
-        timestamp = timestamp / 100000;
-        return `key_${timestamp}`;
+        return `key_${Math.random().toString(36).substr(2, 9)}`;
     };
-    // return `key_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
 
     useEffect(() => {
         const updateKey = () => {

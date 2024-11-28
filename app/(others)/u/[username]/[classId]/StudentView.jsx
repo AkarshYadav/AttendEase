@@ -1,37 +1,63 @@
 'use client';
 
-import { useKey } from './KeyContext';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Loader2, Copy, Check, MapPin, Clock, Users, AlertTriangle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Clock, MapPin, Check } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const StudentView = ({ classData, isActive, hasMarked, timeLeft, progressValue, onMarkAttendance }) => {
     const [enteredKey, setEnteredKey] = useState('');
     const [error, setError] = useState('');
-    const { uniqueKey, prevKey } = useKey();
+    const [loading, setLoading] = useState(false);
 
     const handleKeyChange = (e) => setEnteredKey(e.target.value);
 
-    const handleAttendanceMark = () => {
-        let timestamp = Date.now() - Date.now() % 100000;
-        timestamp = timestamp / 100000;
-        let key = `key_${timestamp}`;
-
-        // const isValidKey =
-        //     enteredKey === uniqueKey ||
-        //     enteredKey === prevKey || 
-        //     enteredKey === key;
-
-        if (enteredKey === key) {
-            onMarkAttendance();
-            setError('');
-        } else {
-            // setError(`Invalid key.key= ${uniqueKey}, ${prevKey}, key= ${key}`);
-            setError(`Invalid key. Please use the current attendance key.`);
+    const handleAttendanceMark = async () => {
+        setLoading(true);
+        setError('');
+        const classId = classData._id;
+    
+        try {
+            // Ensure classId is correctly included in the query parameters
+            const response = await fetch(`/api/classes/${classId}/get-latest-key?classId=${classId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            const data = await response.json();
+    
+            // Check if the response is not OK
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch the key.');
+            }
+    
+            // Extract the latest key from the response
+            const { latestKey } = data;
+    
+            console.log('Fetched Latest Key:', latestKey); // Log fetched key for debugging
+            console.log('Entered Key:', enteredKey); // Log entered key for debugging
+    
+            // Compare the entered key with the fetched latest key
+            if (enteredKey.trim() === latestKey.trim()) {
+                console.log('Keys Match! Attendance Marked');
+                onMarkAttendance();
+                setError('');
+            } else {
+                console.log('Keys Do Not Match:', { enteredKey, latestKey });
+                setError('Invalid or expired key. Please check with your teacher.');
+            }
+        } catch (err) {
+            console.error('Error verifying key:', err);
+            setError('Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
+    
+
 
     return (
         <div className="space-y-4">

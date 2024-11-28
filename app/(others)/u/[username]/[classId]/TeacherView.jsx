@@ -1,6 +1,5 @@
 'use client';
 
-import { useKey } from './KeyContext';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
@@ -23,11 +22,53 @@ const TeacherView = ({
     onStartAttendance,
     onEndAttendance,
 }) => {
-    const { uniqueKey } = useKey();
     const [showDurationModal, setShowDurationModal] = useState(false);
     const [duration, setDuration] = useState(5); // Default 5 minutes
     const [radius, setRadius] = useState(100);
+    const [uniqueKey, setUniqueKey] = useState('');
     const [qrCodeValue, setQrCodeValue] = useState(uniqueKey);
+
+    // Generate a secure unique key
+    const generateUniqueKey = () => { 
+        return `key_${Math.random().toString(36).substr(2, 9)}`;
+    };
+
+    // Save the key to the database
+    const saveKeyToDatabase = async (classId, key) => {
+        try {
+            const response = await fetch(`/api/classes/${classId}/update-key`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ classId, newKey: key }), // Use `newKey` as per your API structure
+            });
+    
+            if (!response.ok) {
+                console.error('Failed to save key:', await response.json());
+            }
+        } catch (error) {
+            console.error('Error saving key:', error);
+        }
+    };
+    
+    // Handle key generation and database sync
+    useEffect(() => {
+        const updateKey = async () => {
+            const newKey = generateUniqueKey();
+            setUniqueKey(newKey);
+    
+            // Ensure you have a valid `classId` available
+            // const classId = '673a2b92a0f6336aa8e3b693'; // Replace with actual dynamic classId if available
+    
+            // Save the new key and delete the previous one in the database
+            await saveKeyToDatabase(classId, newKey);
+        };
+    
+        updateKey();
+        const intervalId = setInterval(updateKey, 30000);
+    
+        return () => clearInterval(intervalId);
+    }, []);
+    
 
     const handleStartAttendance = () => {
         setShowDurationModal(true);

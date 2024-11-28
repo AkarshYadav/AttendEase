@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '../../hooks/use-toast';
 
+import { useSidebar } from "@/store/use-sidebar";
 const AttendanceHistory = ({ classId, userRole }) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +31,8 @@ const AttendanceHistory = ({ classId, userRole }) => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
 
+  const { collapsed } = useSidebar((state) => state);
+
   useEffect(() => {
     fetchSessions();
   }, [dateRange]);
@@ -37,7 +40,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
   const fetchSessions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/classes/${classId}/attendance/history`, {
+      const response = await axios.get(`/api/classes / ${ classId } / attendance / history`, {
         params: {
           from: dateRange.from?.toISOString(),
           to: dateRange.to?.toISOString()
@@ -81,11 +84,11 @@ const AttendanceHistory = ({ classId, userRole }) => {
           });
 
           const attendeeCount = updatedStudents.filter(s => s.attended).length;
-          
+
           return {
             ...session,
             enrolledStudents: updatedStudents,
-            attendees: newStatus 
+            attendees: newStatus
               ? [...session.attendees, { student: { _id: studentId } }]
               : session.attendees.filter(a => a.student._id !== studentId),
             attendancePercentage: Math.round((attendeeCount / session.totalStudents) * 100)
@@ -117,7 +120,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
     try {
       setExportLoading(true);
       // Fetch full attendance history without date range limitations
-      const response = await axios.get(`/api/classes/${classId}/attendance/history`);
+      const response = await axios.get(`/api/classes / ${ classId } / attendance / history`);
       const { sessions } = response.data;
 
       // Prepare data for export
@@ -130,6 +133,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
 
       // Generate and download the file
       XLSX.writeFile(workbook, `${classId}_attendance_${new Date().toISOString().split('T')[0]}.xlsx`);
+
 
       toast({
         title: "Export Successful",
@@ -150,7 +154,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
   const prepareExportData = (sessions) => {
     // Sort sessions from oldest to newest (ascending)
     const sortedSessions = sessions.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-    const sessionDates = sortedSessions.map(session => 
+    const sessionDates = sortedSessions.map(session =>
       new Date(session.startTime).toLocaleDateString('en-GB')
     );
 
@@ -158,7 +162,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
     const numericStudents = [];
     const alphaStudents = [];
     const studentMap = new Map();
-    
+
     sessions.forEach(session => {
       session.enrolledStudents.forEach(student => {
         if (!studentMap.has(student._id)) {
@@ -172,7 +176,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
           } else {
             alphaStudents.push(student_copy);
           }
-          
+
           studentMap.set(student._id, student_copy);
         }
       });
@@ -180,10 +184,10 @@ const AttendanceHistory = ({ classId, userRole }) => {
 
     // Sort numeric IDs first, then alphanumeric
     const sortedStudents = [
-      ...numericStudents.sort((a, b) => 
+      ...numericStudents.sort((a, b) =>
         a['CollegeID'].localeCompare(b['CollegeID'], undefined, { numeric: true })
       ),
-      ...alphaStudents.sort((a, b) => 
+      ...alphaStudents.sort((a, b) =>
         a['CollegeID'].localeCompare(b['CollegeID'])
       )
     ];
@@ -191,14 +195,14 @@ const AttendanceHistory = ({ classId, userRole }) => {
     // Create rows with attendance data
     const rows = sortedStudents.map(student => {
       const studentAttendance = { 'CollegeID': student.CollegeID };
-      
+
       // Add attendance for each session in order
       sortedSessions.forEach(session => {
         const sessionDate = new Date(session.startTime).toLocaleDateString('en-GB');
         const studentInSession = session.enrolledStudents.find(
           s => s.collegeId === student.CollegeID
         );
-        
+
         studentAttendance[sessionDate] = studentInSession && studentInSession.attended ? 1 : 0;
       });
 
@@ -231,11 +235,11 @@ const AttendanceHistory = ({ classId, userRole }) => {
                 <strong>Duration:</strong> {selectedSession.duration} minutes
               </div>
               <div>
-                <strong>Attendance:</strong> {selectedSession.attendees.length} / {selectedSession.totalStudents} 
+                <strong>Attendance:</strong> {selectedSession.attendees.length} / {selectedSession.totalStudents}
                 ({selectedSession.attendancePercentage}%)
               </div>
             </div>
-            
+
             <Table>
               <TableHeader>
                 <TableRow>
@@ -257,8 +261,8 @@ const AttendanceHistory = ({ classId, userRole }) => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {student.attended && student.markedAt 
-                        ? new Date(student.markedAt).toLocaleTimeString() 
+                      {student.attended && student.markedAt
+                        ? new Date(student.markedAt).toLocaleTimeString()
                         : '-'}
                     </TableCell>
                     <TableCell>
@@ -307,7 +311,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex  flex-col justify-between items-center">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
           <Card>
             <CardHeader>
@@ -331,10 +335,10 @@ const AttendanceHistory = ({ classId, userRole }) => {
             </CardContent>
           </Card>
         </div>
-        <Button 
+        <Button
           onClick={exportAttendanceToSheet}
           disabled={exportLoading || sessions.length === 0}
-          className="ml-4"
+          className="ml-4 mt-4"
         >
           {exportLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -372,7 +376,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
                 <TableCell>{session.attendees.length} / {session.totalStudents}</TableCell>
                 <TableCell>{session.attendancePercentage}%</TableCell>
                 <TableCell>
-                  <Button 
+                  <Button
                     variant="ghost"
                     onClick={() => viewSessionDetails(session)}
                   >

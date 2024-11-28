@@ -98,6 +98,8 @@ export const authOptions = {
   },
 };
 
-const handler = NextAuth(authOptions);
+const auth = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+// Define the route handlers (using POST for NextAuth)
+export const POST = auth;
+export const GET = auth;

@@ -20,7 +20,6 @@ import StudentAnalytics from '@/components/classes/StudentAnalytics';
 import LiveAttendanceList from '@/components/classes/LiveAttendanceList';
 import StudentAttendanceHistory from '@/components/classes/StudentAttendanceHistory';
 import StudentPersonalAnalytics from '@/components/classes/StudentPersonalAnalytics';
-import { KeyProvider } from './KeyContext';
 import TeacherView from './TeacherView';
 import StudentView from './StudentView';
 
@@ -234,7 +233,6 @@ const ClassPage = () => {
 
           </div>
 
-          <KeyProvider>
           {selectedTab === 'attendance' && (
             userRole === 'teacher' ? (
               <TeacherView
@@ -260,7 +258,6 @@ const ClassPage = () => {
               />
             )
           )}
-          </KeyProvider>
 
           {selectedTab === 'history' && (
             userRole === 'teacher' ? (

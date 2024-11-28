@@ -134,7 +134,7 @@ const SignIn = () => {
             <span className="font-semibold">Continue with Google</span>
           </button>
         <p className="text-center text-sm mt-4">
-          Don't have an account?{" "}
+          Don&apos;t have an account?
           <Link href="/signup" className="text-blue-600 hover:underline">
             Register
           </Link>

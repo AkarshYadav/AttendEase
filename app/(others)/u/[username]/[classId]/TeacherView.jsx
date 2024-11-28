@@ -56,10 +56,7 @@ const TeacherView = ({
             const newKey = generateUniqueKey();
             setUniqueKey(newKey);
     
-            // Ensure you have a valid `classId` available
-            // const classId = '673a2b92a0f6336aa8e3b693'; // Replace with actual dynamic classId if available
-    
-            // Save the new key and delete the previous one in the database
+            // Save the new key 
             await saveKeyToDatabase(classId, newKey);
         };
     

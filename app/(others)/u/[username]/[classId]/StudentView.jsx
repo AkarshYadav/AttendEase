@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Clock, MapPin, Check } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
-const StudentView = ({ classData, isActive, hasMarked, timeLeft, progressValue, onMarkAttendance }) => {
+const StudentView = ({ classId, classData, isActive, hasMarked, timeLeft, progressValue, onMarkAttendance }) => {
     const [enteredKey, setEnteredKey] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -16,7 +16,6 @@ const StudentView = ({ classData, isActive, hasMarked, timeLeft, progressValue, 
     const handleAttendanceMark = async () => {
         setLoading(true);
         setError('');
-        const classId = classData._id;
     
         try {
             // Ensure classId is correctly included in the query parameters

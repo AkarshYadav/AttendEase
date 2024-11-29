@@ -249,6 +249,7 @@ const ClassPage = () => {
               />
             ) : (
               <StudentView
+                classId={params.classId}
                 classData={classData}
                 isActive={isActive}
                 hasMarked={hasMarked}

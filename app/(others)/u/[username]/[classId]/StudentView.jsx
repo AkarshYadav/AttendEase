@@ -13,11 +13,13 @@ const StudentView = ({ classId, classData, isActive, hasMarked, timeLeft, progre
 
     const handleKeyChange = (e) => setEnteredKey(e.target.value);
 
-    const handleAttendanceMark = async (classId) => {
+    const handleAttendanceMark = async () => {
         setLoading(true);
         setError('');
+        console.log(`classId: ${classId}`);
     
         try {
+            console.log(`url: /api/classes/${classId}/get-latest-key?classId=${classId}`);
             // Ensure classId is correctly included in the query parameters
             const response = await fetch(`/api/classes/${classId}/get-latest-key?classId=${classId}`, {
                 method: 'GET',
@@ -103,7 +105,7 @@ const StudentView = ({ classId, classData, isActive, hasMarked, timeLeft, progre
                                     )}
 
                                     <Button
-                                        onClick={handleAttendanceMark(classId)}
+                                        onClick={handleAttendanceMark}
                                         className="w-full"
                                         disabled={!enteredKey}
                                     >

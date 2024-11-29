@@ -13,7 +13,7 @@ const StudentView = ({ classId, classData, isActive, hasMarked, timeLeft, progre
 
     const handleKeyChange = (e) => setEnteredKey(e.target.value);
 
-    const handleAttendanceMark = async () => {
+    const handleAttendanceMark = async (classId) => {
         setLoading(true);
         setError('');
     
@@ -103,7 +103,7 @@ const StudentView = ({ classId, classData, isActive, hasMarked, timeLeft, progre
                                     )}
 
                                     <Button
-                                        onClick={handleAttendanceMark}
+                                        onClick={handleAttendanceMark(classId)}
                                         className="w-full"
                                         disabled={!enteredKey}
                                     >

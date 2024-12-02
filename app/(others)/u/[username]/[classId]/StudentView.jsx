@@ -17,39 +17,46 @@ const StudentView = ({ classId, classData, isActive, hasMarked, timeLeft, progre
         setLoading(true);
         setError('');
         console.log(`classId: ${classId}`);
-
-        // Ensure classId is correctly included in the query parameters
-        const response = await fetch(`/api/classes/${classId}/get-latest-key?classId=${classId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-
-        const data = await response.json();
-
-        // Check if the response is not OK
-        if (!response.ok) {
-            throw new Error(data.message || 'Failed to fetch the key.');
-        }
-
-        // Extract the latest key from the response
-        const { latestKey } = data;
-
-        console.log('Fetched Latest Key:', latestKey); // Log fetched key for debugging
-        console.log('Entered Key:', enteredKey); // Log entered key for debugging
-
-        // Compare the entered key with the fetched latest key
-        if (enteredKey.trim() === latestKey.trim()) {
-            console.log('Keys Match! Attendance Marked');
-            onMarkAttendance();
-            setError('');
-        } else {
-            console.log('Keys Do Not Match:', { enteredKey, latestKey });
-            setError('Invalid or expired key. Please check with your teacher.');
+    
+        try {
+            // Ensure classId is correctly included in the query parameters
+            const response = await fetch(`/api/classes/${classId}/get-latest-key?classId=${classId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            const data = await response.json();
+    
+            // Check if the response is not OK
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch the key.');
+            }
+    
+            // Extract the latest key from the response
+            const { latestKey } = data;
+    
+            console.log('Fetched Latest Key:', latestKey); // Log fetched key for debugging
+            console.log('Entered Key:', enteredKey); // Log entered key for debugging
+    
+            // Compare the entered key with the fetched latest key
+            if (enteredKey.trim() === latestKey.trim()) {
+                console.log('Keys Match! Attendance Marked');
+                onMarkAttendance();
+                setError('');
+            } else {
+                console.log('Keys Do Not Match:', { enteredKey, latestKey });
+                setError('Invalid or expired key. Please check with your teacher.');
+            }
+        } catch (err) {
+            console.error('Error verifying key:', err);
+            setError('Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
-
+    
 
 
     return (

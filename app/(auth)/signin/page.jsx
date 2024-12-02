@@ -61,16 +61,16 @@ const SignIn = () => {
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-100 fixed top-0 left-0 w-full">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
-      <div className="flex justify-center mb-4">
-            <Image
-              src="/pinsearch.svg"
-              alt="Pinsearch Svg"
-              height={100}
-              width={100}
-              priority
-              className="w-13 h-13"
-            />
-          </div>
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/pinsearch.svg"
+            alt="Pinsearch Svg"
+            height={100}
+            width={100}
+            priority
+            className="w-13 h-13"
+          />
+        </div>
         <h2 className="text-center text-2xl font-semibold mb-1">
           AttendEase Login
         </h2>
@@ -107,33 +107,20 @@ const SignIn = () => {
         </div>
 
         <button
-            onClick={() => signIn("github", { callbackUrl: "/" })}
-            className="w-full p-3 bg-black text-white rounded-lg flex justify-center items-center space-x-2 mb-3 hover:bg-[#111]"
-          >
-            <Image
-              src="/github2.svg"
-              alt="Github"
-              width={150}
-              height={150}
-              priority
-              className="w-6 h-6"
-            />
-            <span className="font-semibold">Continue with Github</span>
-          </button>
-          <button
-            onClick={() => signIn("google", { callbackUrl: "/" })}
-            className="w-full p-3 bg-white text-black rounded-lg flex justify-center items-center space-x-2 mb-3 hover:bg-gray-100"
-          >
-            <Image
-              src="/google.svg"
-              alt="Github"
-              width={150}
-              height={150}
-              priority
-              className="w-6 h-6"
-            />
-            <span className="font-semibold">Continue with Google</span>
-          </button>
+          onClick={() => signIn("google", { callbackUrl: "/" })}
+          className="w-full p-3 bg-white text-black rounded-lg flex justify-center items-center space-x-2 mb-3 hover:bg-gray-100"
+        >
+          <Image
+            src="/google.svg"
+            alt="Google"
+            width={150}
+            height={150}
+            priority
+            className="w-6 h-6"
+          />
+          <span className="font-semibold">Continue with Google</span>
+        </button>
+
         <p className="text-center text-sm mt-4">
           Don&apos;t have an account?
           <Link href="/signup" className="text-blue-600 hover:underline">

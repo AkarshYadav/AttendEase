@@ -40,7 +40,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
   const fetchSessions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/classes / ${ classId } / attendance / history`, {
+      const response = await axios.get(`/api/classes/${classId}/attendance/history`, {
         params: {
           from: dateRange.from?.toISOString(),
           to: dateRange.to?.toISOString()
@@ -120,7 +120,7 @@ const AttendanceHistory = ({ classId, userRole }) => {
     try {
       setExportLoading(true);
       // Fetch full attendance history without date range limitations
-      const response = await axios.get(`/api/classes / ${ classId } / attendance / history`);
+      const response = await axios.get(`/api/classes/${classId}/attendance/history`);
       const { sessions } = response.data;
 
       // Prepare data for export

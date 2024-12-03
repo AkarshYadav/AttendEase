@@ -100,6 +100,12 @@ const SignIn = () => {
           {loading ? <ClipLoader color={"#fff"} size={20} /> : "Sign In"}
         </button>
 
+        <div className="text-center mb-4">
+          <Link href="/resetPassword" className="text-blue-500 text-sm hover:underline">
+            Forgot Password?
+          </Link>
+        </div>
+
         <div className="flex items-center justify-center space-x-2 mb-2">
           <div className="h-px bg-gray-300 w-full"></div>
           <p className="text-gray-500">OR</p>

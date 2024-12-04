@@ -45,6 +45,7 @@ const ClassPage = () => {
     startAttendance,
     markAttendance,
     endAttendance,
+    extendAttendance,
     refreshStatus
   } = useAttendance(params?.classId);
 
@@ -172,9 +173,10 @@ const ClassPage = () => {
   // Loading state
   if (loading || attendanceLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      <div className="fixed inset-0 flex justify-center items-center">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+    
     );
   }
 
@@ -246,6 +248,10 @@ const ClassPage = () => {
                 onCopyCode={handleCopyClassCode}
                 onStartAttendance={(options) => handleLocationAction('start', options)}
                 onEndAttendance={() => handleLocationAction('end')}
+                onExtendAttendance={(options) => {
+                  const { duration } = options;
+                  extendAttendance({ duration });
+                }}
               />
             ) : (
               <StudentView

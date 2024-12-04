@@ -90,99 +90,146 @@
         }
 
         // Mark attendance
-        export async function PUT(req, { params }) {
-            try {
-                await connect();
-                const session = await getServerSession(authOptions);
-                
-                if (!session) {
-                    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-                }
+       // Mark attendance or extend session
+export async function PUT(req, { params }) {
+    try {
+        await connect();
+        const session = await getServerSession(authOptions);
 
-                const { sessionId, location } = await req.json();
-                const classId = await params.classId;
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-                // Verify student enrollment
-                const enrollment = await Enrollment.findOne({
-                    class: classId,
-                    student: session.user.id,
-                    status: 'active'
-                });
+        const { sessionId, location, duration } = await req.json();
+        const classId = params.classId;
 
-                if (!enrollment) {
-                    return NextResponse.json(
-                        { error: "Not enrolled in this class" },
-                        { status: 401 }
-                    );
-                }
+        // Check if this is a request to extend the session
+        if (duration) {
+            // Verify user is the class creator
+            const classDoc = await Class.findById(classId);
+            if (!classDoc || classDoc.creator.toString() !== session.user.id) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            }
 
-                // Get active attendance session
-                const attendanceSession = await AttendanceSession.findOne({
-                    _id: sessionId,
-                    class: classId,
-                    status: 'active'
-                });
-
-                if (!attendanceSession) {
-                    return NextResponse.json(
-                        { error: "No active attendance session found" },
-                        { status: 404 }
-                    );
-                }
-
-                // Calculate distance between student and class location
-                const distance = calculateDistance(
-                    location.latitude,
-                    location.longitude,
-                    attendanceSession.location.coordinates[1],
-                    attendanceSession.location.coordinates[0]
-                );
-
-                if (distance > attendanceSession.radius) {
-                    return NextResponse.json(
-                        { error: "You are too far from the class location" },
-                        { status: 400 }
-                    );
-                }
-
-                // Check if student already marked attendance
-                const alreadyMarked = attendanceSession.attendees.some(
-                    a => a.student.toString() === session.user.id
-                );
-
-                if (alreadyMarked) {
-                    return NextResponse.json(
-                        { error: "Attendance already marked" },
-                        { status: 400 }
-                    );
-                }
-
-                // Mark attendance
-                await AttendanceSession.findByIdAndUpdate(
-                    sessionId,
-                    {
-                        $push: {
-                            attendees: {
-                                student: session.user.id,
-                                location: {
-                                    type: 'Point',
-                                    coordinates: [location.longitude, location.latitude]
-                                }
-                            }
-                        }
-                    }
-                );
-
-                return NextResponse.json({ message: "Attendance marked successfully" });
-
-            } catch (error) {
-                console.error('Error marking attendance:', error);
+            // Find the existing session
+            const existingSession = await AttendanceSession.findById(sessionId);
+            if (!existingSession) {
                 return NextResponse.json(
-                    { error: "Failed to mark attendance" },
-                    { status: 500 }
+                    { error: "Attendance session not found" },
+                    { status: 404 }
                 );
             }
+
+            // Calculate the new end time
+            const newEndTime = new Date(existingSession.endTime.getTime() + duration * 1000);
+
+            // Update the session with the new end time
+            const updatedSession = await AttendanceSession.findByIdAndUpdate(
+                sessionId,
+                { 
+                    endTime: newEndTime,
+                    status: 'active' // Ensure it remains active
+                },
+                { new: true }
+            );
+
+            // Schedule the new session end
+            setTimeout(async () => {
+                await AttendanceSession.findByIdAndUpdate(
+                    updatedSession._id,
+                    { status: 'completed' }
+                );
+            }, newEndTime.getTime() - Date.now());
+
+            return NextResponse.json({ 
+                message: "Attendance session extended",
+                sessionId: updatedSession._id,
+                newEndTime
+            });
         }
+
+        // If no duration is provided, proceed with marking attendance
+        const enrollment = await Enrollment.findOne({
+            class: classId,
+            student: session.user.id,
+            status: 'active'
+        });
+
+        if (!enrollment) {
+            return NextResponse.json(
+                { error: "Not enrolled in this class" },
+                { status: 401 }
+            );
+        }
+
+        // Get active attendance session
+        const attendanceSession = await AttendanceSession.findOne({
+            _id: sessionId,
+            class: classId,
+            status: 'active'
+        });
+
+        if (!attendanceSession) {
+            return NextResponse.json(
+                { error: "No active attendance session found" },
+                { status: 404 }
+            );
+        }
+
+        // Calculate distance between student and class location
+        const distance = calculateDistance(
+            location.latitude,
+            location.longitude,
+            attendanceSession.location.coordinates[1],
+            attendanceSession.location.coordinates[0]
+        );
+
+        if (distance > attendanceSession.radius) {
+            return NextResponse.json(
+                { error: "You are too far from the class location" },
+                { status: 400 }
+            );
+        }
+
+        // Check if student already marked attendance
+        const alreadyMarked = attendanceSession.attendees.some(
+            a => a.student.toString() === session.user.id
+        );
+
+        if (alreadyMarked) {
+            return NextResponse.json(
+                { error: "Attendance already marked" },
+                { status: 400 }
+            );
+        }
+
+        // Mark attendance
+        await AttendanceSession.findByIdAndUpdate(
+            sessionId,
+            {
+                $push: {
+                    attendees: {
+                        student: session.user.id,
+                        location: {
+                            type: 'Point',
+                            coordinates: [location.longitude, location.latitude]
+                        }
+                    }
+                }
+            }
+        );
+
+        return NextResponse.json({ message: "Attendance marked successfully" });
+
+    } catch (error) {
+        console.error('Error handling PUT request:', error);
+        return NextResponse.json(
+            { error: "Failed to process request" },
+            { status: 500 }
+        );
+    }
+}
+
 
         // Get attendance session status
         export async function GET(req, { params }) {

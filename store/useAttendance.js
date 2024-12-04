@@ -89,11 +89,28 @@ export const useAttendance = (classId) => {
         }
     }, [classId, refreshStatus]);
 
+    const extendAttendance = async ({ duration }) => {
+        try {
+            setState((prev) => ({ ...prev, loading: true }));
+            const response = await axios.put(`/api/classes/${classId}/attendance`, {
+                sessionId: state.sessionId,
+                duration, // Duration in seconds
+            });
+            refreshStatus();
+        } catch (error) {
+            setState((prev) => ({
+                ...prev,
+                loading: false,
+                error: error?.response?.data?.error || 'Failed to extend attendance',
+            }));
+        }
+    };
     return {
         ...state,
         startAttendance,
         endAttendance,
         markAttendance,
         refreshStatus,
+        extendAttendance 
     };
 };

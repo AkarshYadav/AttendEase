@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Copy, Check, MapPin, Clock, Users, AlertTriangle } from 'lucide-react';
+import { Loader2, Copy, Check, MapPin, Clock, Users, RotateCcw } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -15,21 +15,26 @@ const TeacherView = ({
     classId,
     classData,
     isActive,
+    sessionId,
     timeLeft,
     progressValue,
     copied,
     onCopyCode,
     onStartAttendance,
     onEndAttendance,
+    onExtendAttendance
 }) => {
     const [showDurationModal, setShowDurationModal] = useState(false);
     const [duration, setDuration] = useState(5); // Default 5 minutes
     const [radius, setRadius] = useState(100);
     const [uniqueKey, setUniqueKey] = useState('');
     const [qrCodeValue, setQrCodeValue] = useState(uniqueKey);
+    const [showExtendModal, setShowExtendModal] = useState(false);
+    const [extendDuration, setExtendDuration] = useState(5);
+    const [sessionExpired, setSessionExpired] = useState(false);
 
     // Generate a secure unique key
-    const generateUniqueKey = () => { 
+    const generateUniqueKey = () => {
         return `key_${Math.random().toString(36).substr(2, 9)}`;
     };
 
@@ -41,7 +46,7 @@ const TeacherView = ({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ classId, newKey: key }), // Use `newKey` as per your API structure
             });
-    
+
             if (!response.ok) {
                 console.error('Failed to save key:', await response.json());
             }
@@ -49,26 +54,34 @@ const TeacherView = ({
             console.error('Error saving key:', error);
         }
     };
-    
+
     // Handle key generation and database sync
     useEffect(() => {
         const updateKey = async () => {
             const newKey = generateUniqueKey();
             setUniqueKey(newKey);
-    
+
             // Save the new key 
             await saveKeyToDatabase(classId, newKey);
         };
-    
-        updateKey();
-        const intervalId = setInterval(updateKey, 30000);
-    
-        return () => clearInterval(intervalId);
-    }, []);
-    
+
+        if (isActive) {
+            updateKey();
+            const intervalId = setInterval(updateKey, 30000);
+            return () => clearInterval(intervalId);
+        }
+    }, [isActive, classId]);
+
+    // Track session expiration
+    useEffect(() => {
+        if (progressValue === 0 && isActive) {
+            setSessionExpired(true);
+        }
+    }, [progressValue, isActive]);
 
     const handleStartAttendance = () => {
         setShowDurationModal(true);
+        setSessionExpired(false);
     };
 
     const handleConfirmStart = () => {
@@ -79,6 +92,15 @@ const TeacherView = ({
             radius,
         });
         setShowDurationModal(false);
+        setSessionExpired(false);
+    };
+
+    const handleExtendSession = () => {
+        onExtendAttendance({
+            duration: extendDuration * 60 // Convert minutes to seconds
+        });
+        setShowExtendModal(false);
+        setSessionExpired(false);
     };
 
     useEffect(() => {
@@ -87,7 +109,6 @@ const TeacherView = ({
             setQrCodeValue(uniqueKey);
         }
     }, [isActive, uniqueKey]);
-    
 
     return (
         <div className="space-y-6">
@@ -126,12 +147,12 @@ const TeacherView = ({
                     ) : (
                         <div className="flex gap-2 w-full sm:w-auto">
                             <Button
-                                variant="secondary"
+                                variant={sessionExpired ? 'secondary' : "default"}
                                 className="flex-1"
                                 disabled={true}
                             >
                                 <Clock className="h-4 w-4 mr-2" />
-                                Session Active
+                                {sessionExpired ? 'Session Expired' : 'Session Active'}
                             </Button>
                             <Button
                                 variant="destructive"
@@ -140,20 +161,27 @@ const TeacherView = ({
                             >
                                 End Session
                             </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowExtendModal(true)}
+                                className="flex-1"
+                            >
+                                <RotateCcw className="h-4 w-4 mr-2" />
+                                Extend
+                            </Button>
                         </div>
                     )}
-                    {timeLeft && (
+                    {(timeLeft || sessionExpired) && (
                         <span className="text-sm font-medium">
-                            Time Remaining: {timeLeft}
+                            Time Remaining: {timeLeft || '0:00'}
                         </span>
                     )}
                 </div>
 
-                {isActive && qrCodeValue && (
+                {isActive && !sessionExpired && qrCodeValue && (
                     <div className="my-4 flex flex-col justify-center items-center">
                         <p className="mt-4">
                             Scan this QR code to mark your attendance.
-                            key value : {qrCodeValue}
                         </p>
                         <QRCodeCanvas
                             value={qrCodeValue}
@@ -166,10 +194,8 @@ const TeacherView = ({
                     </div>
                 )}
 
-                {isActive ? (
+                {isActive && (
                     <LiveAttendanceList classId={classId} />
-                ) : (
-                    ''
                 )}
 
                 {isActive && (
@@ -183,6 +209,7 @@ const TeacherView = ({
                 )}
             </div>
 
+            {/* Duration Modal for Starting Attendance */}
             {showDurationModal && (
                 <Dialog open={showDurationModal} onOpenChange={setShowDurationModal}>
                     <DialogContent>
@@ -221,6 +248,39 @@ const TeacherView = ({
                                 Cancel
                             </Button>
                             <Button onClick={handleConfirmStart}>Start Session</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+
+            {/* Extend Session Modal */}
+            {showExtendModal && (
+                <Dialog open={showExtendModal} onOpenChange={setShowExtendModal}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Extend Attendance Session</DialogTitle>
+                            <DialogDescription>
+                                Choose additional duration for the attendance session
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="flex items-center gap-4">
+                                <Label htmlFor="extendDuration">Additional Duration (minutes)</Label>
+                                <Input
+                                    id="extendDuration"
+                                    type="number"
+                                    value={extendDuration}
+                                    onChange={(e) => setExtendDuration(Number(e.target.value))}
+                                    min={1}
+                                    max={60}
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setShowExtendModal(false)}>
+                                Cancel
+                            </Button>
+                            <Button onClick={handleExtendSession}>Extend Session</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
